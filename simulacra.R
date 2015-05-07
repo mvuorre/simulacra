@@ -6,6 +6,8 @@
 # install.packages("BayesFactor")
 # install.packages("reshape2")
 
+# To run experiment, set working directory and source("simulacra.R")
+
 # Load packages
 library(ggplot2)
 library(gridExtra)
