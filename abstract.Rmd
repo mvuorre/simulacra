@@ -1,0 +1,116 @@
+---
+title: "Simulacra"
+author: "Neurostorm"
+date: "May 7th, 2015"
+abstract: "Graphical inference---in the absence of numerical inferential statistics---can reveal the subjective qualities of data observation: At what point do observers decide that two groups' data are different? We propose a method for eliciting '_signal present_' judgments from visual observations of two groups' data, and comparing these judgments to widely used descriptive and inferential statistics."
+output: rmarkdown::tufte_handout
+---
+
+```{r, echo=F, comment=F, warning=FALSE, message=F}
+library(ggplot2)
+library(gridExtra)
+library(ggthemes)
+library(reshape2)
+library(xtable)
+library(knitr)
+library(lme4)
+options(xtable.comment = FALSE)
+options(xtable.booktabs = TRUE)
+options(digits=3)
+opts_chunk$set(fig.retina=2)
+opts_chunk$set(echo=F)
+# Customize output
+options(digits=2)
+theme_set(theme_fivethirtyeight(base_size = 8) + 
+              theme(axis.title=element_text(size=8),
+                    axis.title.y=element_text(angle=90),
+                    legend.position='none')) 
+```
+
+# Introduction
+
+>"The only statistical test one ever needs is the IOTT or 'interocular trauma test.' The result just hits one between the eyes. If one needs any more statistical analysis, one should be working harder to control sources of error, or perhaps studying something else entirely." Krantz, 1999.
+
+In this passage, David Krantz (1999; J. Am. Stat. Assoc.) described a possible view on statistics among some research psychologists. If we were to use the IOTT as a decision tool, how would our decisions (to reject the null hypothesis of no difference between two random samples) look in terms of commonly used descriptive and inferential statistics?
+
+# Method
+
+Eight experienced data observers provided "signal present" / "signal not present" judgments upon observing scatterplots of two groups (n=20) data. The data were randomly sampled from normal distributions $y_{1} \sim N(0, 1)$ and $y_{2} \sim N(d, 1)$, where $d \sim N(0, 1)$ for each trial.
+
+# Results
+
+Here we present subjects responses as functions of Cohen's d (Figure 1.) and the p-value from Welch's unequal variances t-test (Figure 2.).
+
+```{r, fig.cap="Subjects' 'signal present' responses (colored lines) as function of Cohen's d, estimated from a multilevel model. Average fit and PSE are shown in black."}
+source("simulacra_load_data.R")
+m_cd <- glmer(resp ~ cohens_d + (cohens_d | id), 
+             data=dat, family="binomial")
+
+# Average predictions
+new_cd <- data.frame(cohens_d = seq(min(dat$cohens_d), 
+                                  max(dat$cohens_d), length=64))
+new_cd$fit_d <- predict(m_cd, re.form=NA, type="response", newdata=new_cd)
+# Average PSE
+m_cd_pse <- as.numeric(fixef(m_cd)[1]/-fixef(m_cd)[2])
+
+# Subject-level predictions
+new_cd_subj <- data.frame(expand.grid(id=sort(unique(dat$id)),
+                                     cohens_d = seq(min(dat$cohens_d), 
+                                                    max(dat$cohens_d), length=64)))
+new_cd_subj$fit_d <- predict(m_cd, type="response", newdata=new_cd_subj)
+
+m_cd_plot <- ggplot(new_cd, aes(x=cohens_d, y=fit_d)) + 
+    geom_vline(x=m_cd_pse, lty=1, size=.8) +
+    geom_point(data=dat,aes(y=resp), shape=1, size=2) +
+    geom_point(data=dat,aes(y=resp), alpha=.4, size=2) +
+    geom_line(data=new_cd_subj,
+              aes(x=cohens_d, y=fit_d, group=id, col=id)) +
+    geom_line(size=1.2) +
+    #scale_x_continuous(breaks=m1_x) +
+    labs(x="Cohen's d", y="P(signal)", 
+         title="Cohen's d") +
+    coord_cartesian(xlim=c(0,max(dat$d_obs)))
+print(m_cd_plot)
+```
+
+```{r, fig.cap="Subjects' 'signal present' responses (colored lines) as function of the p-value, estimated from a multilevel model. Average fit and PSE are shown in black."}
+dat$logp <- log(dat$p, 10)
+m_p <- glmer(resp ~ logp + (logp | id),
+            data=dat, family="binomial")
+# Average predictions
+new_p <- data.frame(logp = seq(min(dat$logp), 
+                                  max(dat$logp), length=64))
+new_p$fit_p <- predict(m_p, re.form=NA, type="response", newdata=new_p)
+# Average PSE
+m_p_pse <- as.numeric(fixef(m_p)[1]/-fixef(m_p)[2])
+#get pvals on original scale
+new_p$p <- round(10^new_p$logp, 4)
+# Subject-level predictions
+new_p_subj <- data.frame(expand.grid(id=sort(unique(dat$id)),
+                                     logp = seq(min(dat$logp), 
+                                                    max(dat$logp), length=64)))
+new_p_subj$fit_p <- predict(m_p, type="response", newdata=new_p_subj)
+
+m_p_plot <- ggplot(new_p, aes(x=logp, y=fit_p)) + 
+    geom_vline(x=m_p_pse, col="red", lty=1, size=.8) +
+    geom_point(data=dat,aes(y=resp), shape=1, size=2) +
+    geom_point(data=dat,aes(y=resp), alpha=.4, size=2) +
+    geom_line(data=new_p_subj,
+              aes(x=logp, y=fit_p, group=id, col=id)) +
+    geom_line(size=1.2) +
+    scale_x_continuous(breaks=new_p$logp[c(25,35,40,45,50,64)], 
+                       labels=new_p$p[c(25,35,40,45,50,64)]) +
+    coord_cartesian(xlim = c(new_p$logp[c(20,64)])) +
+    labs(x="p-value", y="P(signal)", 
+         title="p-value")
+m_p_plot
+```
+
+
+
+
+
+
+
+
+
