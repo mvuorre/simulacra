@@ -51,7 +51,7 @@ new_cd <- data.frame(cohens_d = seq(min(dat$cohens_d),
                                   max(dat$cohens_d), length=64))
 new_cd$fit_d <- predict(m_cd, re.form=NA, type="response", newdata=new_cd)
 # Average PSE
-m_cd_pse <- as.numeric(fixef(m_cd)[1]/-fixef(m_cd)[2])
+m_cd_pse <- as.numeric(-fixef(m_cd)[1]/fixef(m_cd)[2])
 
 # Subject-level predictions
 new_cd_subj <- data.frame(expand.grid(id=sort(unique(dat$id)),
@@ -82,7 +82,7 @@ new_p <- data.frame(logp = seq(min(dat$logp),
                                   max(dat$logp), length=64))
 new_p$fit_p <- predict(m_p, re.form=NA, type="response", newdata=new_p)
 # Average PSE
-m_p_pse <- as.numeric(fixef(m_p)[1]/-fixef(m_p)[2])
+m_p_pse <- as.numeric(-fixef(m_p)[1]/fixef(m_p)[2])
 #get pvals on original scale
 new_p$p <- round(10^new_p$logp, 4)
 # Subject-level predictions

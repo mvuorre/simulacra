@@ -75,9 +75,9 @@ new3 <- data.frame(bf = seq(min(d$bf), max(d$bf), length=64))
 new1$fit_d <- predict(m1, type="response", newdata=new1)
 new2$fit_p <- predict(m2, type="response", newdata=new2)
 new3$fit_bf <- predict(m3, type="response", newdata=new3)
-m1_pse <- as.numeric(coef(m1)[1]/-coef(m1)[2])
-m2_pse <- as.numeric(coef(m2)[1]/-coef(m2)[2])
-m3_pse <- as.numeric(coef(m3)[1]/-coef(m3)[2])
+m1_pse <- as.numeric(-coef(m1)[1]/coef(m1)[2])
+m2_pse <- as.numeric(-coef(m2)[1]/coef(m2)[2])
+m3_pse <- as.numeric(-coef(m3)[1]/coef(m3)[2])
 
 # Plot subject's responses
 m1_x <- sort(c(seq(0, max(d$cohens_d), length=3), m1_pse))
