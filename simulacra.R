@@ -46,7 +46,7 @@ for (trial in 1:trials) {
     # Compute p-value from indp t-test
     d[trial, "p"] <- t.test(g1, g2)$p.val
     # Default bayes factor
-    d[trial, "bf"] = ttestBF(g1, g2)@bayesFactor$bf
+    d[trial, "bf"] = exp(ttestBF(g1, g2)@bayesFactor$bf)
     # Create plot
     tmp = melt(data.frame(g1, g2), id.vars=NULL)
     print(ggplot(tmp, aes(variable, value)) + 
