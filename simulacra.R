@@ -2,7 +2,6 @@
 # If you need to install packages
 # install.packages("ggplot2")
 # install.packages("gridExtra")
-# install.packages("ggthemes")
 # install.packages("BayesFactor")
 # install.packages("reshape2")
 
@@ -10,18 +9,24 @@
 
 # Load packages
 library(ggplot2)
-library(gridExtra)
-library(ggthemes)
 library(BayesFactor)
 library(reshape2)
 
 # Customize output
 options(digits=2)
-theme_set(theme_fivethirtyeight(base_size = 16) + 
-              theme(axis.title=element_text(size=14),
-                    axis.title.y=element_text(angle=90)))
+# Theme for output
+tt <- theme_bw(base_size = 16) + 
+    theme(axis.title=element_text(size=14),
+          axis.title.y=element_text(angle=90))
+# Theme for experiment
+te <- theme(text = element_text(size=0),
+            axis.text.x = element_text(size=16),
+            axis.ticks.y = element_blank(),
+            panel.grid = element_blank(),
+            axis.title.y=element_blank())
+theme_set(tt)
 # Set experiment options
-trials=30
+trials=20
 n=20
 
 # Begin experiment
@@ -31,15 +36,23 @@ cat("\n\n##################### >> SIMULACRA << #####################\n\n")
 subj <- readline(prompt="Subject ID: ")
 l1 = vector(mode="list", length=trials)
 l2 = vector(mode="list", length=trials)
+conditions <- sample( rep(c("lognorm", "norm"), each=n/2) )
 d <- data.frame(d=NA, d_obs=NA, cohens_d=NA, response=NA, resp=NA, 
-                p=NA, bf=NA, ksp=NA, stringsAsFactors = FALSE)
+                p=NA, bf=NA, ksp=NA, lognorm=conditions, stringsAsFactors = FALSE)
 
 # Loop over trials
 for (trial in 1:trials) {
-    d[trial,"d"] <- rnorm(1) # Set difference in population means
-    l1[[trial]] = g1 = rnorm(n) # Sample for group 1
-    l2[[trial]] = g2 = rnorm(n, mean = d[trial,"d"]) # Sample for group 2
-    d[trial,"d_obs"] <- abs(mean(g1) - mean(g2)) # Observed difference in means
+    # Set difference in population means
+    d[trial,"d"] <- rexp(1, rate=1.5)
+    # Sample for group 1
+    l1[[trial]] = g1 = rnorm(n)
+    # Sample for group 2 based on condition
+    if(d[trial, "lognorm"]=="lognorm") 
+        {g2 = (rlnorm(n, meanlog=0, sdlog=1) + d[trial,"d"])} else 
+        {g2 = rnorm(n, mean = d[trial,"d"])}
+    l2[[trial]] = g2
+    # Observed difference in means
+    d[trial,"d_obs"] <- abs(mean(g1) - mean(g2))
     # Compute Cohen's d
     d[trial,"cohens_d"] <- abs(mean(g1) - mean(g2)) /
         sqrt((((n-1)*var(g1) + (n-1)*var(l2[[trial]]))) / (n*2)/2)
@@ -53,88 +66,25 @@ for (trial in 1:trials) {
     tmp = melt(data.frame(g1, g2), id.vars=NULL)
     print(ggplot(tmp, aes(variable, value)) + 
               geom_point(position = position_jitter(h=0, w=.08), size=3) +
-              coord_cartesian(ylim = c(-4, 4)) +
+              coord_cartesian(ylim = c(min(tmp$value)-1, max(tmp$value)+1)) +
               scale_x_discrete(labels=c("group1", "group2")) +
-              theme_stata() +
-              theme(text = element_text(size=0),
-                    axis.text.x = element_text(size=16),
-                    axis.ticks.y = element_blank(),
-                    panel.grid = element_blank()))
+              te)
     # Get response
-    d[trial,"response"] <- readline(prompt="Signal present? (y/n): ")
+    resp=NA
+    while (!(resp %in% c("y", "n", "q"))) {
+        resp <- readline(prompt="Signal present? (y/n): ")    
+    }
+    if (resp=="q") {break}
+    d[trial,"response"] <- resp
     d[trial,"resp"] <- ifelse(d[trial,"response"]=="y", 1, 0) # Convert to 1/0
 }
 
 # Save subject's data file
 write.csv(d, paste(subj, ".csv", sep=""))
 
-# Fit models and generate curves
-m1 <- glm(resp ~ cohens_d, data=d, family='binomial')
-m2 <- glm(resp ~ p, data=d, family='binomial')
-m3 <- glm(resp ~ bf, data=d, family='binomial')
-m4 <- glm(resp ~ ksp, data=d, family='binomial')
-new1 <- data.frame(cohens_d = seq(min(d$cohens_d), 
-                                  max(d$cohens_d), length=64))
-new2 <- data.frame(p = seq(min(d$p), max(d$p), length=64))
-new3 <- data.frame(bf = seq(min(d$bf), max(d$bf), length=64))
-new4 <- data.frame(ksp = seq(min(d$ksp), max(d$ksp), length=64))
-new1$fit_d <- predict(m1, type="response", newdata=new1)
-new2$fit_p <- predict(m2, type="response", newdata=new2)
-new3$fit_bf <- predict(m3, type="response", newdata=new3)
-new4$fit_ksp <- predict(m4, type="response", newdata=new4)
-m1_pse <- as.numeric(-coef(m1)[1]/coef(m1)[2])
-m2_pse <- as.numeric(-coef(m2)[1]/coef(m2)[2])
-m3_pse <- as.numeric(-coef(m3)[1]/coef(m3)[2])
-m4_pse <- as.numeric(-coef(m4)[1]/coef(m4)[2])
+# Show output
+source("simulacra_output.R")
 
-# Plot subject's responses
-m1_x <- sort(c(seq(0, max(d$cohens_d), length=3), m1_pse))
-m2_x <- sort(seq(m2_pse, max(d$p), length=4))
-m3_x <- sort(seq(m3_pse, max(d$bf), length=4))
-m4_x <- sort(seq(m4_pse, max(d$ksp), length=4))
-# Cohen's d plot
-m1_plot <- ggplot(new1, aes(x=cohens_d, y=fit_d)) + 
-    geom_vline(x=m1_pse, col="red", lty=2, size=1.2) +
-    geom_hline(y=.5, col="red", lty=3, size=.7) +
-    geom_point(data=d,aes(y=resp), shape=1, size=4) +
-    geom_point(data=d,aes(y=resp), alpha=.4, size=4) +
-    geom_line(size=1.2) +
-    scale_x_continuous(breaks=m1_x) +
-    labs(x="Cohen's d", y="P(signal)", 
-         title="Cohen's d") +
-    coord_cartesian(xlim=c(0,max(d$d_obs)))
-# P value plot
-m2_plot <- ggplot(new2, aes(x=p, y=fit_p)) + 
-    geom_vline(x=m2_pse, col="red", lty=2, size=1.2) +
-    geom_hline(y=.5, col="red", lty=3, size=.7) +
-    geom_point(data=d,aes(y=resp), shape=1, size=4) +
-    geom_point(data=d,aes(y=resp), alpha=.4, size=4) +
-    geom_line(size=1.2) +
-    scale_x_continuous(breaks=m2_x) +
-    labs(x="p-value", y="P(signal)", 
-         title="t-test")
-# Bayes factor plot
-m3_plot <- ggplot(new3, aes(x=bf, y=fit_bf)) + 
-    geom_vline(x=m3_pse, col="red", lty=2, size=1.2) +
-    geom_hline(y=.5, col="red", lty=3, size=.7) +
-    geom_point(data=d,aes(y=resp), shape=1, size=4) +
-    geom_point(data=d,aes(y=resp), alpha=.4, size=4) +
-    geom_line(size=1.2) +
-    scale_x_continuous(breaks=c(m3_x)) +
-    #coord_cartesian(xlim=c(0,20)) +
-    labs(x="logBF", y="P(signal)", 
-         title="Bayes factor")
-# Kolmogorov-Smirnov p-value plot
-m4_plot <- ggplot(new4, aes(x=ksp, y=fit_ksp)) + 
-    geom_vline(x=m4_pse, col="red", lty=2, size=1.2) +
-    geom_hline(y=.5, col="red", lty=3, size=.7) +
-    geom_point(data=d,aes(y=resp), shape=1, size=4) +
-    geom_point(data=d,aes(y=resp), alpha=.4, size=4) +
-    geom_line(size=1.2) +
-    scale_x_continuous(breaks=m4_x) +
-    labs(x="K-S p-value", y="P(signal)", 
-         title="Kolmogorov-Smirnov test")
-
-grid.arrange(ncol=2, m1_plot, m2_plot,
-             m3_plot, m4_plot)
+# Show detailed output
+source("simulacra_manual_output.R")
     
