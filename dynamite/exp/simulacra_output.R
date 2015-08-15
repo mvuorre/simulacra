@@ -8,9 +8,9 @@ tt <- theme_bw(base_size = 16) +
 theme_set(tt)
 
 print(select(d, -stimulus, -id, -d_mu_obs) %>% 
-    melt(id.vars=c("resp")) %>%
+    melt(id.vars=c("resp", "condition")) %>%
     data.frame() %>%
-    ggplot(aes(y=resp, x=value)) +
+    ggplot(aes(y=resp, x=value, col=condition)) +
     geom_point() +
     scale_y_continuous(limits=c(0,1)) +    
     geom_smooth(method="glm", family="binomial", se=T, level=.8) +

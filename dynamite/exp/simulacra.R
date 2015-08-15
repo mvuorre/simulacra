@@ -10,7 +10,7 @@ te <- theme(text = element_text(size=0),
             axis.text.x = element_text(size=16),
             axis.ticks.y = element_blank(),
             panel.grid = element_blank(),
-            axis.title.y = element_blank(),
+            axis.title = element_blank(),
             panel.background = element_rect(fill = "gray95"))
 options(digits=3)
 
@@ -40,17 +40,16 @@ for (trial in sample(1:nrow(d))) {
     print(ggplot(mtmp, aes(variable, value)) + 
               geom_point(position = position_jitter(h=0, w=.08), size=3) +
               coord_cartesian(ylim = c(min(mtmp$value)-1, max(mtmp$value)+1)) +
-              scale_x_discrete(labels=c("group1", "group2")) +
+              scale_x_discrete(labels=c("Group 1", "Group 2")) +
               te)
     } 
     else {
     print(ggplot(mtmp, aes(variable, value)) +
-              geom_point(position = position_jitter(h=0, w=.08), size=3, alpha=.2) +
-              stat_summary(fun.y="mean", geom="segment", size=16, col="grey50",
+              stat_summary(fun.y="mean", geom="segment", size=24, col="grey50",
                            aes(xend=variable, yend=min(mtmp$value)-1)) +
               stat_summary(fun.data="mean_se", geom="errorbar", width=.1) +
               coord_cartesian(ylim = c(min(mtmp$value)-1, max(mtmp$value)+1)) +
-              scale_x_discrete(labels=c("group1", "group2")) +
+              scale_x_discrete(labels=c("Group 1", "Group 2")) +
               te)
     }
     

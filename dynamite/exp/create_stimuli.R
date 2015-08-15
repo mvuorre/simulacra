@@ -3,8 +3,8 @@
 library(BayesFactor)
 
 # Set experiment options
-N <- 40 # Number of sample-pairs to create
-n <- 30 # Number of observations in each sample
+N <- 80 # Number of sample-pairs to create
+n <- 25 # Number of observations in each sample
 
 # Lists to record samples
 samples_1 <- vector(mode="list", length=N)
