@@ -42,7 +42,7 @@ Eight experienced data observers provided "signal present" / "signal not present
 Here we present subjects responses as functions of Cohen's d (Figure 1.) and the p-value from Welch's unequal variances t-test (Figure 2.).
 
 ```{r, fig.cap="Subjects' 'signal present' responses (colored lines) as function of Cohen's d, estimated from a multilevel model. Average fit and PSE are shown in black."}
-source("simulacra_load_data.R")
+source("../baseline/analysis/simulacra_load_data.R")
 m_cd <- glmer(resp ~ cohens_d + (cohens_d | id), 
              data=dat, family="binomial")
 

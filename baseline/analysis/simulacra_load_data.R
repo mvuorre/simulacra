@@ -1,6 +1,6 @@
 # Load files
 # Set path
-pth <- "data_pilot/"
+pth <- "../data_pilot/"
 fl <- list.files(pth)
 dat <- data.frame()
 # Loop over files in directory and bind by row, adding filename as id
@@ -9,4 +9,5 @@ for (f in fl) {
     tmp <- data.frame(cbind(id=f, tmp))
     dat <- rbind(dat, tmp)
 }
+
 

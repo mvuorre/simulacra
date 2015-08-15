@@ -34,8 +34,7 @@ m1_plot <- ggplot(new1, aes(x=cohens_d, y=fit_d)) +
     geom_line(size=1.2) +
     scale_x_continuous(breaks=m1_x) +
     labs(x="Cohen's d", y="P(signal)", 
-         title="Cohen's d") +
-    coord_cartesian(xlim=c(0,max(d$d_obs)))
+         title="Cohen's d")
 # P value plot
 m2_plot <- ggplot(new2, aes(x=p, y=fit_p)) + 
     geom_vline(x=m2_pse, col="red", lty=2, size=1.2) +
@@ -44,6 +43,7 @@ m2_plot <- ggplot(new2, aes(x=p, y=fit_p)) +
     geom_point(data=d,aes(y=resp), alpha=.4, size=4) +
     geom_line(size=1.2) +
     scale_x_continuous(breaks=m2_x) +
+    coord_cartesian(xlim=c(0, .2)) +
     labs(x="p-value", y="P(signal)", 
          title="t-test")
 # Bayes factor plot
