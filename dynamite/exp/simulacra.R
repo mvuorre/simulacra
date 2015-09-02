@@ -8,7 +8,7 @@ library(reshape2)
 # Theme for experiment
 te <- theme(text = element_text(size=0),
             axis.text.x = element_text(size=16),
-            axis.ticks.y = element_blank(),
+            axis.ticks = element_blank(),
             panel.grid = element_blank(),
             axis.title = element_blank(),
             panel.background = element_rect(fill = "gray95"))

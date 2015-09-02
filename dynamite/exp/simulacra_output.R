@@ -7,7 +7,7 @@ tt <- theme_bw(base_size = 16) +
           axis.title.y=element_text(angle=90))
 theme_set(tt)
 
-print(select(d, -stimulus, -id, -d_mu_obs) %>% 
+print(select(d, cohens_d, p, bf, resp, condition) %>% 
     melt(id.vars=c("resp", "condition")) %>%
     data.frame() %>%
     ggplot(aes(y=resp, x=value, col=condition)) +
